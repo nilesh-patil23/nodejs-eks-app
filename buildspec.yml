@@ -1,5 +1,9 @@
 version: 0.2
 
+env:
+  variables:
+    KUBECONFIG: "/root/.kube/config"  # Use this to set kubeconfig path globally
+
 phases:
   pre_build:
     commands:
@@ -7,6 +11,9 @@ phases:
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 361769582717.dkr.ecr.ap-south-1.amazonaws.com
       - REPOSITORY_URI=361769582717.dkr.ecr.ap-south-1.amazonaws.com/eks-nodejs-repo
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - echo Updating kubeconfig...
+      - mkdir -p ~/.kube
+      - aws eks update-kubeconfig --region ap-south-1 --name nodejs-eks-cluster
 
   build:
     commands:
@@ -15,85 +22,22 @@ phases:
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
-    commands:     
-      - echo Pushing the Docker image to ECR...
+    commands:
+      - echo Pushing Docker image to ECR...
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Creating imagedefinitions.json...
+      - echo Writing imagedefinitions.json...
       - printf '[{"name":"nodejs-app","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
-      # New commands to update kubeconfig and deploy to EKS
-      - echo Updating kubeconfig...
-      - aws eks update-kubeconfig --region ap-south-1 --name nodejs-eks-cluster
-      - echo Deploying to EKS cluster...
-      - kubectl apply -f deploy/deployment.yaml
-      - kubectl apply -f deploy/service.yaml
+      - echo Verifying cluster access...
+      - kubectl get svc || echo "kubectl get svc failed"
+
+      - echo Deploying to EKS...
+      - kubectl apply -f deploy/deployment.yaml --validate=false
+      - kubectl apply -f deploy/service.yaml --validate=false
 
 artifacts:
   files:
     - imagedefinitions.json
     - deploy/deployment.yaml
     - deploy/service.yaml
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
