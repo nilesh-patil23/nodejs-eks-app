@@ -1,4 +1,4 @@
-iersion: 0.2
+version: 0.2
 
 phases:
   pre_build:
@@ -10,21 +10,79 @@ phases:
 
   build:
     commands:
-      - echo Building Docker image...
-      - docker build -t eks-nodejs-repo .
-      - docker tag eks-nodejs-repo:latest $REPOSITORY_URI:$IMAGE_TAG
-      - docker tag eks-nodejs-repo:latest $REPOSITORY_URI:latest
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo Pushing image to ECR...
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Pushing the Docker image to ECR...
       - docker push $REPOSITORY_URI:latest
-      - echo Writing imagedefinitions.json...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Creating imagedefinitions.json...
       - printf '[{"name":"nodejs-app","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
-artifacts:
-  files:
-    - imagedefinitions.json
-    - deploy/deployment.yaml
-    - deploy/service.yaml
+  artifacts:
+    files:
+      - imagedefinitions.json
+      - deploy/deployment.yaml
+      - deploy/service.yaml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
